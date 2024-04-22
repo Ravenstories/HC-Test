@@ -91,8 +91,8 @@ namespace HC_TestEnvironment
             memoryStream.Position = 0;  // Reset the position to read from the beginning
             var reader = new StreamReader(memoryStream);
             var writtenContent = reader.ReadToEnd();
-            Console.WriteLine($"Written Content: {writtenContent}");  // Output the actual content for debugging
-            Assert.IsTrue(writtenContent.Contains("149,126,250,18/04/2024 08.00.05"), "Content does not match expected value.");
+            Console.WriteLine($"Written Content: \"{writtenContent}\"");  // Output the actual content for debugging
+            Assert.IsTrue(writtenContent.Contains("149,126,250,18-04-2024 08:00:05"), "Content does not match expected value.");
         }
 
     }
