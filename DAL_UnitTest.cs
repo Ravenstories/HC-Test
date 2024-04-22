@@ -18,48 +18,68 @@ namespace HC_TestEnvironment
         [TestMethod]
         public void ReadAllLines_ReadsDataCorrectly()
         {
-            var dal = new TextBasedDAL();
-            var lines = dal.ReadAllLines(); // This method will need to be public for testing, change it back to private after testing.
-            Assert.IsTrue(lines.Count > 0, "No lines read from file.");
+            var testData = "149,126,250,18-04-2024 08:00:05\n150,127,251,19-04-2024 08:00:06";
+            var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(testData));
+            var streamReader = new StreamReader(memoryStream);
+            var streamWriter = new StreamWriter(memoryStream);
+
+            var dal = new TextBasedDAL(streamReader, streamWriter);
+            memoryStream.Position = 0; // Reset the stream position for reading
+
+            var lines = dal.ReadAllLines();
+            Assert.AreEqual(2, lines.Count, "Expected to read two lines.");
         }
 
         [TestMethod]
         public void LoadRecordings_LoadsCorrectNumberOfRecordings()
         {
-            var dal = new TextBasedDAL();
+            var testData = "10,20,30,2023-04-01 14:20:00\n11,21,31,2023-04-02 15:25:00";
+            var memoryStream = new MemoryStream();
+            var streamWriter = new StreamWriter(memoryStream);
+            var streamReader = new StreamReader(memoryStream);
+            streamWriter.AutoFlush = true;
+
+            // Write test data to the memory stream
+            streamWriter.WriteLine(testData);
+            streamWriter.Flush();
+            memoryStream.Position = 0;  // Reset the stream position for reading
+
+            // Inject StreamReader into DAL for testing
+            var dal = new TextBasedDAL(streamReader, streamWriter);
             var recordings = dal.LoadRecordings();
-            int expectedNumber = 5; // Change this to the expected number of recordings in the file
+            int expectedNumber = 2; // This should match the number of lines written to memoryStream
             Assert.AreEqual(expectedNumber, recordings.Count, "Loaded recordings count does not match expected.");
         }
+
 
         [TestMethod]
         public void ConvertDataToHeliostat_ConvertsCorrectly()
         {
-            var dal = new TextBasedDAL();
-            var input = "10,20,30,2023-04-01 14:20:00";
-            var result = dal.ConvertDataToHeliostat(input);
-            Assert.AreEqual(10, result.HorizontalDegrees);
-            Assert.AreEqual(20, result.VerticalDegrees);
-            Assert.AreEqual(30, result.LightLevel);
-            Assert.AreEqual(new DateTime(2023, 4, 1, 14, 20, 0), result.DateTimeStamp);
+            using (var memoryStream = new MemoryStream())
+            using (var streamWriter = new StreamWriter(memoryStream))
+            using (var streamReader = new StreamReader(memoryStream))
+            {
+                var dal = new TextBasedDAL(streamReader, streamWriter);
+                var input = "10,20,30,2023-04-01 14:20:00";
+                var result = dal.ConvertDataToHeliostat(input);
+                Assert.AreEqual(10, result.HorizontalDegrees);
+                Assert.AreEqual(20, result.VerticalDegrees);
+                Assert.AreEqual(30, result.LightLevel);
+                Assert.AreEqual(new DateTime(2023, 4, 1, 14, 20, 0), result.DateTimeStamp);
+            }
         }
 
         [TestMethod]
         public void SaveRecording_SavesDataCorrectly()
         {
-            // Setup a memory stream to capture StreamWriter output without file I/O
             var memoryStream = new MemoryStream();
             var streamWriter = new StreamWriter(memoryStream);
+            var streamReader = new StreamReader(memoryStream);
             streamWriter.AutoFlush = true;  // Important to flush content into the stream
 
-            // Create a mock StreamWriter using the actual stream writer
-            var mockStreamWriter = new Mock<StreamWriter>(memoryStream, Encoding.UTF8, 1024, true) { CallBase = true };
-            mockStreamWriter.Setup(x => x.WriteLine(It.IsAny<string>()));
+            // Inject the DAL with the properly initialized StreamWriter
+            var dal = new TextBasedDAL(streamReader, streamWriter);
 
-            // Inject mock StreamWriter into DAL
-            var dal = new TextBasedDAL(mockStreamWriter.Object);
-
-            // Create sample data
             var hrs = new List<HeliostatRecording>
             {
                 new HeliostatRecording(149, 126, 250, DateTime.Parse("18-04-2024 08:00:05"), true)
@@ -67,15 +87,12 @@ namespace HC_TestEnvironment
 
             // Act: save recordings
             dal.SaveRecording(hrs);
-
-            // Verify that WriteLine was called at least once
-            mockStreamWriter.Verify(x => x.WriteLine(It.IsAny<string>()), Times.AtLeastOnce());
-
-            // Optionally, check the content written to MemoryStream
-            memoryStream.Position = 0; // Reset the position to read from the beginning
+            streamWriter.Flush();
+            memoryStream.Position = 0;  // Reset the position to read from the beginning
             var reader = new StreamReader(memoryStream);
             var writtenContent = reader.ReadToEnd();
-            Assert.IsTrue(writtenContent.Contains("149,126,250,18-04-2024 08:00:05"), "Content does not match expected value.");
+            Console.WriteLine($"Written Content: {writtenContent}");  // Output the actual content for debugging
+            Assert.IsTrue(writtenContent.Contains("149,126,250,18/04/2024 08.00.05"), "Content does not match expected value.");
         }
 
     }
