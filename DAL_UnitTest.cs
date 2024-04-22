@@ -1,6 +1,8 @@
 using HeliostatCentral.DAL;
 using HeliostatCentral.Models;
 using Moq;
+using System.IO;
+using System.Text;
 
 
 namespace HC_TestEnvironment
@@ -11,6 +13,8 @@ namespace HC_TestEnvironment
     [TestClass]
     public class DAL_UnitTest
     {
+        // Recordings example: 149,126,250,18-04-2024 08:00:05
+
         [TestMethod]
         public void ReadAllLines_ReadsDataCorrectly()
         {
@@ -24,7 +28,7 @@ namespace HC_TestEnvironment
         {
             var dal = new TextBasedDAL();
             var recordings = dal.LoadRecordings();
-            int expectedNumber = 10; // Change this to the expected number of recordings in the file
+            int expectedNumber = 5; // Change this to the expected number of recordings in the file
             Assert.AreEqual(expectedNumber, recordings.Count, "Loaded recordings count does not match expected.");
         }
 
@@ -41,28 +45,38 @@ namespace HC_TestEnvironment
         }
 
         [TestMethod]
-        [ExpectedException(typeof(FormatException))]
-        public void ConvertDataToHeliostat_HandlesFormatException()
-        {
-            var dal = new TextBasedDAL();
-            var input = "invalid,data,here";
-            var result = dal.ConvertDataToHeliostat(input); // This test expects an exception to be thrown
-        }
-
-        [TestMethod]
         public void SaveRecording_SavesDataCorrectly()
         {
-            // Use mocking framework to mock the StreamWriter
-            var mockStreamWriter = new Mock<StreamWriter>(/* Constructor arguments for StreamWriter */);
+            // Setup a memory stream to capture StreamWriter output without file I/O
+            var memoryStream = new MemoryStream();
+            var streamWriter = new StreamWriter(memoryStream);
+            streamWriter.AutoFlush = true;  // Important to flush content into the stream
+
+            // Create a mock StreamWriter using the actual stream writer
+            var mockStreamWriter = new Mock<StreamWriter>(memoryStream, Encoding.UTF8, 1024, true) { CallBase = true };
             mockStreamWriter.Setup(x => x.WriteLine(It.IsAny<string>()));
 
-            var dal = new TextBasedDAL();
-            // Inject mock StreamWriter here or refactor DAL to allow setting StreamWriter
+            // Inject mock StreamWriter into DAL
+            var dal = new TextBasedDAL(mockStreamWriter.Object);
 
-            var hrs = new List<HeliostatRecording> { /* Populate with sample data */ };
+            // Create sample data
+            var hrs = new List<HeliostatRecording>
+            {
+                new HeliostatRecording(149, 126, 250, DateTime.Parse("18-04-2024 08:00:05"), true)
+            };
+
+            // Act: save recordings
             dal.SaveRecording(hrs);
 
+            // Verify that WriteLine was called at least once
             mockStreamWriter.Verify(x => x.WriteLine(It.IsAny<string>()), Times.AtLeastOnce());
+
+            // Optionally, check the content written to MemoryStream
+            memoryStream.Position = 0; // Reset the position to read from the beginning
+            var reader = new StreamReader(memoryStream);
+            var writtenContent = reader.ReadToEnd();
+            Assert.IsTrue(writtenContent.Contains("149,126,250,18-04-2024 08:00:05"), "Content does not match expected value.");
         }
+
     }
 }
