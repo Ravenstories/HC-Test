@@ -92,7 +92,7 @@ namespace HC_TestEnvironment
             };
 
             // Act: save recordings
-            dal.SaveRecording(hrs);
+            dal.SaveRecordings(hrs);
             streamWriter.Flush();
             memoryStream.Position = 0;  // Reset the position to read from the beginning
             var reader = new StreamReader(memoryStream);
