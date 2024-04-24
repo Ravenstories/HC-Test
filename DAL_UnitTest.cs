@@ -28,6 +28,9 @@ namespace HC_TestEnvironment
 
             var lines = dal.ReadAllLines();
             Assert.AreEqual(2, lines.Count, "Expected to read two lines.");
+
+            var linesAgain = dal.ReadAllLines();
+            Assert.AreEqual(2, linesAgain.Count, "Expected to read two lines again.");
         }
 
         [TestMethod]
@@ -49,6 +52,9 @@ namespace HC_TestEnvironment
             var recordings = dal.LoadRecordings();
             int expectedNumber = 2; // This should match the number of lines written to memoryStream
             Assert.AreEqual(expectedNumber, recordings.Count, "Loaded recordings count does not match expected.");
+
+            var recordings2 = dal.LoadRecordings();
+            Assert.AreEqual(expectedNumber, recordings2.Count, "Loaded recordings count does not match expected on second loading.");
         }
 
 
