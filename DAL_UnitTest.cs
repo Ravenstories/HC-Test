@@ -1,5 +1,5 @@
-using HeliostatCentral.DAL;
-using HeliostatCentral.Models;
+using SunTrackerCentral.DAL;
+using SunTrackerCentral.Models;
 using Moq;
 using System.IO;
 using System.Text;
@@ -59,7 +59,7 @@ namespace HC_TestEnvironment
 
 
         [TestMethod]
-        public void ConvertDataToHeliostat_ConvertsCorrectly()
+        public void ConvertDataToRecording_ConvertsCorrectly()
         {
             using (var memoryStream = new MemoryStream())
             using (var streamWriter = new StreamWriter(memoryStream))
@@ -67,7 +67,7 @@ namespace HC_TestEnvironment
             {
                 var dal = new TextBasedDAL(streamReader, streamWriter);
                 var input = "10,20,30,2023-04-01 14:20:00";
-                var result = dal.ConvertDataToHeliostat(input);
+                var result = dal.ConvertDataToSunTrackerRecording(input);
                 Assert.AreEqual(10, result.HorizontalDegrees);
                 Assert.AreEqual(20, result.VerticalDegrees);
                 Assert.AreEqual(30, result.LightLevel);
@@ -86,9 +86,9 @@ namespace HC_TestEnvironment
             // Inject the DAL with the properly initialized StreamWriter
             var dal = new TextBasedDAL(streamReader, streamWriter);
 
-            var hrs = new List<HeliostatRecording>
+            var hrs = new List<SunTrackerRecording>
             {
-                new HeliostatRecording(149, 126, 250, DateTime.Parse("18-04-2024 08:00:05"), true)
+                new SunTrackerRecording(149, 126, 250, DateTime.Parse("18-04-2024 08:00:05"), true)
             };
 
             // Act: save recordings

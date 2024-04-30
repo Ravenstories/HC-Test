@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HeliostatCentral\HeliostatCentral.csproj" />
+    <ProjectReference Include="..\HeliostatCentral\SunTrackerCentral.csproj" />
   </ItemGroup>
 
   <ItemGroup>
