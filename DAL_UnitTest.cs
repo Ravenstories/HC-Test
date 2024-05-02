@@ -86,13 +86,13 @@ namespace HC_TestEnvironment
             // Inject the DAL with the properly initialized StreamWriter
             var dal = new TextBasedDAL(streamReader, streamWriter);
 
-            var hrs = new List<SunTrackerRecording>
+            var strs = new List<SunTrackerRecording>
             {
                 new SunTrackerRecording(149, 126, 250, DateTime.Parse("18-04-2024 08:00:05"), true)
             };
 
             // Act: save recordings
-            dal.SaveRecordings(hrs);
+            dal.SaveRecordings(strs);
             streamWriter.Flush();
             memoryStream.Position = 0;  // Reset the position to read from the beginning
             var reader = new StreamReader(memoryStream);
